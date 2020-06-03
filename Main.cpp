@@ -1,5 +1,5 @@
 #include <iostream>
-#include <hash_map>
+//#include <hash_map>
 
 using namespace std;
 using namespace stdext;
@@ -133,7 +133,7 @@ public:
 			return false;
 		}
 
-		if (account->deposit(value)) {
+		if (!account->deposit(value)) {
 			cout << "값이 0보다 작을 수는 없습니다." << endl;
 			return false;
 		}
@@ -151,7 +151,7 @@ public:
 			return false;
 		}
 
-		if (account->withdraw(value)) {
+		if (!account->withdraw(value)) {
 			cout << "값이 0보다 작을 수는 없습니다." << endl;
 			return false;
 		}
@@ -196,13 +196,13 @@ private:
 
 	int inputInt(const char* text) {
 		int value;
-		cout << text;
+		cout << text << ":";
 		cin >> value;
 		return value;
 	}
 
 	char* inputCharArray(const char* text) {
-		char* value;
+		char* value = new char[NAME_LEN];
 		cout << text << ":";
 		cin >> value;
 		return value;
@@ -252,7 +252,7 @@ private:
 
 			break;
 		default:
-
+			cout << "잘못된 값입니다." << endl;
 		}
 
 	}
@@ -266,7 +266,7 @@ public:
 	}
 
 	~BankApplication() {
-		if (this->bank != NULL) delete[] bank;
+		if (this->bank != NULL) delete bank;
 	}
 
 	void run() {
@@ -278,11 +278,12 @@ public:
 
 };
 
-void main() {
+int main() {
 	BankApplication* bankApplication = new BankApplication();
 	bankApplication->run();
 
-	if (bankApplication != NULL) delete[] bankApplication;
+	if (bankApplication != NULL) delete bankApplication;
+	return 0;
 }
 
 // OLD CODE ========================

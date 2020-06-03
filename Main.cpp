@@ -277,7 +277,7 @@ public:
 	}
 
 };
-// aaa
+
 void main() {
 	BankApplication* bankApplication = new BankApplication();
 	bankApplication->run();
@@ -285,6 +285,7 @@ void main() {
 	if (bankApplication != NULL) delete[] bankApplication;
 }
 
+// OLD CODE ========================
 /*
 typedef struct {
 	int accID;

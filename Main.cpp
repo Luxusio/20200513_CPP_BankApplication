@@ -7,56 +7,61 @@ using namespace stdext;
 #define NAME_LEN 20
 #define BANK_SIZE 100
 
+
 class Account {
 private:
 	int accID;		// Account ID
 	int balance;	// Balance
 	char* cusName;	// Customer Name
 	char* regNum;	// Registration Number
-
-	void addBalance(int value) {
-		this->balance += value;
-	}
-
+	
 public:
-
-	Account() {}
+	
+	Account():accID(-2147483648), balance(0), cusName(NULL), regNum(NULL) {
+	}
+	
+	Account(const Account& account):accID(account.accID), balance(account.balance), 
+		cusName(new char[NAME_LEN]), regNum(new char[NAME_LEN]){
+		strcpy(account.cusName, this->cusName);
+		strcpy(account.regNum, this->regNum);
+	}
 
 	~Account() {
 		if (this->cusName != NULL) delete[] cusName;
 		if (this->regNum != NULL) delete[] regNum;
 	}
 
-	void initAccount(int accID, int balance, char*& cusName, char*& regNum) {
-		this->accID = accID;
-		this->balance = balance;
-		this->cusName = cusName;
-		//cusName = new char[BANK_SIZE];
-		this->regNum = regNum;
+	Account(int accID, int balance, char*& cusName, char*& regNum)
+		:accID(accID), balance(balance), cusName(cusName), regNum(regNum){
+
 	}
 
-	int getAccID() {
+	const int getAccID() const {
 		return this->accID;
 	}
 
-	int getBalance() {
+	const int getBalance() const {
 		return this->balance;
 	}
 
-	bool deposit(int amount) {
+	const bool deposit(int amount) {
 		if (amount < 0) return false;
-		this->addBalance(amount);
+		this->balance += amount;
 		return true;
 	}
 
-	bool withdraw(int amount) {
+	const bool withdraw(int amount) {
 		if (amount < 0) return false;
-		this->addBalance(-amount);
+		this->balance -= amount;
 		return true;
 	}
 
-	char* getName() {
+	const char* getName() const {
 		return this->cusName;
+	}
+
+	const char* getRegNum() const {
+		return this->regNum;
 	}
 
 };
@@ -69,7 +74,7 @@ private:
 public:
 
 	Bank(int maxSize) {
-		accounts = new Account[maxSize];
+		accounts = new Account[maxSize]();
 		top = 0;
 	}
 
@@ -77,11 +82,11 @@ public:
 		if (this->accounts != NULL) delete[] accounts;
 	}
 
-	bool hasAccID(int accID) {
+	const bool hasAccID(const int accID) const {
 		return getAccNum(accID) != -1;
 	}
 
-	int getAccNum(int accID) {
+	const int getAccNum(const int accID) const {
 		int i;
 		for (i = 0; i < top; i++) {
 			if (accounts[i].getAccID() == accID) return i;
@@ -89,13 +94,13 @@ public:
 		return -1;
 	}
 
-	Account* getAccount(int accID) {
+	Account* getAccount(const int accID) const {
 		int no = this->getAccNum(accID);
 		if (no == -1) return NULL;
-		return &(accounts[no]);
+		return &accounts[no];
 	}
 
-	void addAccount(int accID, int balance, char*& cusName, char*& regNum) {
+	const void addAccount(const int accID, const int balance, char*& cusName, char*& regNum) {
 		if (hasAccID(accID)) {
 			cout << "이미 존재하는 ID입니다." << endl;
 			return;
@@ -111,21 +116,16 @@ public:
 			return;
 		}
 
-		Account* acc = new Account();
-		acc->initAccount(accID, balance, cusName, regNum);
+		Account acc(accID, balance, cusName, regNum);
 
-		//acc->accID = accID;
-		//acc->balance = balance;
-		//strcpy_s(acc->cusName, cusName);
-
-		accounts[top] = *acc;
+		accounts[top] = acc;
 		top++;
 
 		cout << "계좌가 개설되었습니다" << endl;
 	}
 	
 
-	bool bankDeposit(int accID, int value) {
+	const bool bankDeposit(int accID, int value) {
 		Account* account = this->getAccount(accID);
 
 		if (account == NULL) {
@@ -143,7 +143,7 @@ public:
 		}
 	}
 
-	bool bankWithdraw(int accID, int value) {
+	const bool bankWithdraw(int accID, int value) {
 		Account* account = this->getAccount(accID);
 
 		if (account == NULL) {
@@ -162,8 +162,8 @@ public:
 
 	}
 
-	bool printAccountData(int accID) {
-		Account* account = this->getAccount(accID);
+	const bool printAccountData(int accID) const {
+		const Account* account = this->getAccount(accID);
 		if (account == NULL) {
 			cout << "존재하지 않는 ID입니다." << endl;
 			return false;
@@ -177,14 +177,14 @@ public:
 
 };
 
-class BankApplication {
+class AccountManager {
 private:
 	int select;
 	Bank* bank;
 	bool running;
 
 
-	void printMenu() {
+	const void printMenu() const {
 		cout << "-----Menu-----" << endl;
 		cout << "1. 계좌개설" << endl;
 		cout << "2. 입   금" << endl;
@@ -194,14 +194,14 @@ private:
 		cout << "선택: ";
 	}
 
-	int inputInt(const char* text) {
+	const int inputInt(const char* text) const {
 		int value;
 		cout << text << ":";
 		cin >> value;
 		return value;
 	}
 
-	char* inputCharArray(const char* text) {
+	char* inputCharArray(const char* text) const {
 		char* value = new char[NAME_LEN];
 		cout << text << ":";
 		cin >> value;
@@ -210,14 +210,12 @@ private:
 
 	void cycle() {
 		cin >> select;
+		int accID, balance;
+		char* cusName;
+		char* cusNum;
 
 		switch (select) {
 		case 1:
-			int accID, balance;
-			char* cusName;
-			char* cusNum;
-			//= new char[NAME_LEN];
-
 			cout << "[계좌개설]" << endl;
 			accID = inputInt("계좌ID");
 			cusName = inputCharArray("이  름");
@@ -259,17 +257,20 @@ private:
 
 public:
 
-	BankApplication() {
-		this->bank = new Bank(BANK_SIZE);
-		this->select = 0;
-		this->running = true;
+	AccountManager()
+			:bank(new Bank(BANK_SIZE)), select(0), running(true) {
+
 	}
 
-	~BankApplication() {
+	AccountManager(const AccountManager& bankApp)
+			:bank(bankApp.bank), select(bankApp.select), running(bankApp.running) {
+	}
+
+	~AccountManager() {
 		if (this->bank != NULL) delete bank;
 	}
 
-	void run() {
+	const void run() {
 		while (this->running) {
 			this->printMenu();
 			this->cycle();
@@ -279,10 +280,10 @@ public:
 };
 
 int main() {
-	BankApplication* bankApplication = new BankApplication();
-	bankApplication->run();
+	AccountManager bankApplication;
+	bankApplication.run();
 
-	if (bankApplication != NULL) delete bankApplication;
+	//if (bankApplication != NULL) delete bankApplication;
 	return 0;
 }
 

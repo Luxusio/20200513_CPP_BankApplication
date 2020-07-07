@@ -1,67 +1,191 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
-//#include <hash_map>
+#include <Windows.h>
 
 using namespace std;
-using namespace stdext;
 
-#define NAME_LEN 20
+#define TEXT_LEN 20
+#define BANK_BOOK_SIZE 100
 #define BANK_SIZE 100
 
-
-class Account {
+class BankBook {
 private:
-	int accID;		// Account ID
-	int balance;	// Balance
-	char* cusName;	// Customer Name
-	char* regNum;	// Registration Number
-	
+
+	int bankBookID; // bank book id
+	double balance;	// Balance
+
+protected:
+
+	virtual double getInterestAmount() = 0;
+
+	BankBook() : bankBookID(-2147483648), balance(0.0) {
+
+	}
+
+	BankBook(int bankBookID, double balance) : bankBookID(bankBookID), balance(balance) {
+
+	}
+
+	virtual ~BankBook() {
+
+	}
+
 public:
-	
-	Account():accID(-2147483648), balance(0), cusName(NULL), regNum(NULL) {
-	}
-	
-	Account(const Account& account):accID(account.accID), balance(account.balance), 
-		cusName(new char[NAME_LEN]), regNum(new char[NAME_LEN]){
-		strcpy(account.cusName, this->cusName);
-		strcpy(account.regNum, this->regNum);
+
+	const int getBankBookID() const {
+		return this->bankBookID;
 	}
 
-	~Account() {
-		if (this->cusName != NULL) delete[] cusName;
-		if (this->regNum != NULL) delete[] regNum;
-	}
-
-	Account(int accID, int balance, char*& cusName, char*& regNum)
-		:accID(accID), balance(balance), cusName(cusName), regNum(regNum){
-
-	}
-
-	const int getAccID() const {
-		return this->accID;
-	}
-
-	const int getBalance() const {
+	const double getBalance() const {
 		return this->balance;
 	}
 
-	const bool deposit(int amount) {
+	const bool deposit(double amount) {
 		if (amount < 0) return false;
 		this->balance += amount;
+		this->balance += getInterestAmount();
 		return true;
 	}
 
-	const bool withdraw(int amount) {
+	const bool withdraw(double amount) {
 		if (amount < 0) return false;
 		this->balance -= amount;
 		return true;
 	}
 
-	const char* getName() const {
+};
+
+class NormalBankBook : public BankBook {
+protected:
+	// 이자 1%
+	virtual double getInterestAmount() final {
+		return BankBook::getBalance() * 0.01;
+	}
+
+public:
+
+	NormalBankBook() : BankBook() {
+
+	}
+
+	NormalBankBook(int id, int amount) : BankBook(id, amount) {
+
+	}
+
+};
+
+class DepositBankBook : public BankBook {
+protected:
+	// 이자 2%
+	virtual double getInterestAmount() final {
+		return BankBook::getBalance() * 0.02;
+	}
+
+public:
+
+	DepositBankBook() : BankBook() {
+
+	}
+
+	DepositBankBook(int id, int amount) : BankBook(id, amount) {
+
+	}
+
+};
+
+class Account {
+private:
+
+	char* cusName;	// Customer Name
+	char* regNum;	// Registration Number
+
+	NormalBankBook* normalBankBook;
+	DepositBankBook* depositBankBook;
+
+	int normalBankBookTop;
+	int depositBankBookTop;
+
+public:
+	
+	Account():cusName(NULL), regNum(NULL), normalBankBook(NULL), depositBankBook(NULL), 
+		normalBankBookTop(0), depositBankBookTop(0) {
+
+	}
+	
+	Account(const Account& account): 
+		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]), 
+		normalBankBook(account.normalBankBook), depositBankBook(account.depositBankBook),
+		normalBankBookTop(account.normalBankBookTop), depositBankBookTop(account.depositBankBookTop) {
+
+		strcpy(this->cusName, account.cusName);
+		strcpy(this->regNum, account.regNum);
+	}
+
+	Account(const char* cusName, const char* regNum): 
+		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]),
+		normalBankBook(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBook(new DepositBankBook[BANK_BOOK_SIZE]),
+		normalBankBookTop(0), depositBankBookTop(0) {
+
+		strcpy(this->cusName, cusName);
+		strcpy(this->regNum, regNum);
+
+	}
+	
+	virtual ~Account() {
+		if (this->cusName != NULL) delete[] cusName;
+		if (this->regNum != NULL) delete[] regNum;
+	}
+
+	bool createBankBook(int id, int amount, bool isNormalBankBook) {
+		if (isNormalBankBook) {
+			if (this->normalBankBookTop == BANK_BOOK_SIZE) {
+				return false;
+			}
+			this->normalBankBook[normalBankBookTop++] = NormalBankBook(id, amount);
+			return true;
+		}
+		else {
+			if (this->depositBankBookTop == BANK_BOOK_SIZE) {
+				return false;
+			}
+			this->depositBankBook[depositBankBookTop++] = DepositBankBook(id, amount);
+			return true;
+		}
+
+	}
+
+	// getter
+	char* getName() const {
 		return this->cusName;
 	}
 
-	const char* getRegNum() const {
+	char* getRegNum() const {
 		return this->regNum;
+	}
+
+	NormalBankBook* getNormalBankBook() const {
+		return this->normalBankBook;
+	}
+
+	DepositBankBook* getDepositBankBook() const {
+		return this->depositBankBook;
+	}
+
+	int getNormalBankBookTop() const {
+		return this->normalBankBookTop;
+	}
+
+	int getDepositBankBookTop() const {
+		return this->depositBankBookTop;
+	}
+
+	BankBook* getBankBook(bool isNormalBankBook) {
+		if (isNormalBankBook) {
+			return this->normalBankBook;
+		}
+		else {
+			return this->depositBankBook;
+		}
 	}
 
 };
@@ -73,41 +197,103 @@ private:
 
 public:
 
-	Bank(int maxSize) {
-		accounts = new Account[maxSize]();
-		top = 0;
+	Bank(int maxSize): accounts(new Account[maxSize]()), top(0) {
+		
 	}
 
-	~Bank() {
+	virtual ~Bank() {
 		if (this->accounts != NULL) delete[] accounts;
 	}
 
-	const bool hasAccID(const int accID) const {
-		return getAccNum(accID) != -1;
+	const bool hasBankBookID(const int accID) const {
+		return getBankBook(accID) != NULL;
 	}
 
-	const int getAccNum(const int accID) const {
-		int i;
-		for (i = 0; i < top; i++) {
-			if (accounts[i].getAccID() == accID) return i;
+	BankBook* getBankBook(const int accID) const {
+		for (int i = 0; i < top; i++) {
+			Account acc = this->accounts[i];
+
+			BankBook* bb;
+			int bankBookTop;
+
+			bb = acc.getNormalBankBook();
+			bankBookTop = acc.getNormalBankBookTop();
+			for (int j = 0; j < bankBookTop; j++) {
+				if (bb[j].getBankBookID() == accID) return &bb[j];
+			}
+
+			bb = acc.getDepositBankBook();
+			bankBookTop = acc.getDepositBankBookTop();
+			for (int j = 0; j < bankBookTop; j++) {
+				if (bb[j].getBankBookID() == accID) return &bb[j];
+			}
+		}
+		return NULL;
+	}
+
+	const int getAccNum(const char* cusName, const char* regNum) const {
+		for (int i = 0; i < top; i++) {
+			Account acc = this->accounts[i];
+
+			if (strcmp(acc.getName(), cusName) == 0 &&
+				strcmp(acc.getRegNum(), regNum) == 0) {
+				return i;
+			}
 		}
 		return -1;
 	}
 
-	Account* getAccount(const int accID) const {
-		int no = this->getAccNum(accID);
+	const bool hasAccount(const char* cusName, const char* regNum) const {
+		return getAccNum(cusName, regNum) != -1;
+	}
+
+	Account* getAccount(const char* cusName, const char* regNum) const {
+		int no = this->getAccNum(cusName, regNum);
 		if (no == -1) return NULL;
 		return &accounts[no];
 	}
 
-	const void addAccount(const int accID, const int balance, char*& cusName, char*& regNum) {
-		if (hasAccID(accID)) {
-			cout << "이미 존재하는 ID입니다." << endl;
+	const void createAccount(char* cusName, char* regNum) {
+		if (hasAccount(cusName, regNum)) {
+			cout << "해당 이름과 주민번호로 된 계정이 이미 존재합니다." << endl;
 			return;
 		}
 
 		if (top == BANK_SIZE - 1) {
 			cout << "은행이 가득 찼습니다." << endl;
+			return;
+		}
+		
+		Account acc(cusName, regNum);
+
+		accounts[top++] = acc;
+		
+		cout << "계정이 생성되었습니다" << endl;
+	}
+
+	const void createBankBook(const char* cusName, const char* regNum, const int accID, const int balance, const int type) {
+		Account* account = this->getAccount(cusName, regNum);
+
+		if (account == NULL) {
+			cout << "존재하지 않는 계정입니다." << endl;
+			return;
+		}
+
+		if (getBankBook(accID) != NULL) {
+			cout << "해당 계좌번호는 이미 존재합니다." << endl;
+			return;
+		}
+
+		bool isNormalBankBook;
+		switch (type) {
+		case 1:
+			isNormalBankBook = true;
+			break;
+		case 2:
+			isNormalBankBook = false;
+			break;
+		default:
+			cout << "잘못된 계좌 종류입니다." << endl;
 			return;
 		}
 
@@ -116,62 +302,93 @@ public:
 			return;
 		}
 
-		Account acc(accID, balance, cusName, regNum);
+		if (!isNormalBankBook && account->getNormalBankBookTop() == 0) {
+			cout << "입금계좌를 개설하기 위해서는 보통계좌가 개설되어 있어야 합니다." << endl;
+			return;
+		}
 
-		accounts[top] = acc;
-		top++;
+		if (account->createBankBook(accID, balance, isNormalBankBook)) {
+			if (isNormalBankBook) {
+				cout << "보통계좌가 개설되었습니다." << endl;
+			}
+			else {
+				cout << "입금계좌가 개설되었습니다." << endl;
+			}
+		}
+		else {
+			if (isNormalBankBook) {
+				cout << "더이상 보통계좌를 생성할 수 없습니다." << endl;
+			}
+			else {
+				cout << "더이상 입금계좌를 생성할 수 없습니다." << endl;
+			}
+		}
 
-		cout << "계좌가 개설되었습니다" << endl;
 	}
 	
 
 	const bool bankDeposit(int accID, int value) {
-		Account* account = this->getAccount(accID);
+		BankBook* bankBook = this->getBankBook(accID);
 
-		if (account == NULL) {
-			cout << "존재하지 않는 ID입니다." << endl;
+		if (bankBook == NULL) {
+			cout << "계좌가 존재하지 않습니다." << endl;
 			return false;
 		}
 
-		if (!account->deposit(value)) {
-			cout << "값이 0보다 작을 수는 없습니다." << endl;
-			return false;
-		}
-		else {
+		if (bankBook->deposit(value)) {
 			cout << value << "원을 입금했습니다." << endl;
 			return true;
+		}
+		else {
+			cout << "값이 0보다 작을 수는 없습니다." << endl;
+			return false;
 		}
 	}
 
 	const bool bankWithdraw(int accID, int value) {
-		Account* account = this->getAccount(accID);
+		BankBook* bankBook = this->getBankBook(accID);
 
-		if (account == NULL) {
-			cout << "존재하지 않는 ID입니다." << endl;
+		if (bankBook == NULL) {
+			cout << "계좌가 존재하지 않습니다." << endl;
 			return false;
 		}
 
-		if (!account->withdraw(value)) {
-			cout << "값이 0보다 작을 수는 없습니다." << endl;
-			return false;
-		}
-		else {
+		if (bankBook->withdraw(value)) {
 			cout << value << "원을 출금했습니다." << endl;
 			return true;
+		}
+		else {
+			cout << "값이 0보다 작을 수는 없습니다." << endl;
+			return false;
 		}
 
 	}
 
-	const bool printAccountData(int accID) const {
-		const Account* account = this->getAccount(accID);
+	const bool printAccountData(const char* cusName, const char* regNum) const {
+		const Account* account = this->getAccount(cusName, regNum);
 		if (account == NULL) {
 			cout << "존재하지 않는 ID입니다." << endl;
 			return false;
 		}
 
-		cout << "계좌번호 : " << account->getAccID() << endl;
-		cout << "금액 : " << account->getBalance() << endl;
 		cout << "소유주 : " << account->getName() << endl;
+		cout << "주민번호 : " << account->getRegNum() << endl;
+
+		BankBook* bb;
+		int top;
+
+		bb = account->getNormalBankBook();
+		top = account->getNormalBankBookTop();
+		for (int i = 0; i < top; i++) {
+			cout << "보통계좌(" << bb[i].getBankBookID() << ") " << bb[i].getBalance() << "원" << endl;
+		}
+
+		bb = account->getDepositBankBook();
+		top = account->getDepositBankBookTop();
+		for (int i = 0; i < top; i++) {
+			cout << "예금계좌(" << bb[i].getBankBookID() << ") " << bb[i].getBalance() << "원" << endl;
+		}
+
 		return true;
 	}
 
@@ -179,22 +396,12 @@ public:
 
 class AccountManager {
 private:
+
 	int select;
 	Bank* bank;
 	bool running;
 
-
-	const void printMenu() const {
-		cout << "-----Menu-----" << endl;
-		cout << "1. 계좌개설" << endl;
-		cout << "2. 입   금" << endl;
-		cout << "3. 출   금" << endl;
-		cout << "4. 계좌정보 전체 출력" << endl;
-		cout << "5. 프로그램 종료" << endl;
-		cout << "선택: ";
-	}
-
-	const int inputInt(const char* text) const {
+	int inputInt(const char* text) const {
 		int value;
 		cout << text << ":";
 		cin >> value;
@@ -202,49 +409,88 @@ private:
 	}
 
 	char* inputCharArray(const char* text) const {
-		char* value = new char[NAME_LEN];
+		char* value = new char[TEXT_LEN];
 		cout << text << ":";
 		cin >> value;
 		return value;
 	}
 
+public:
+	
+	AccountManager()
+		:bank(new Bank(BANK_SIZE)), select(0), running(true) {
+
+	}
+
+	AccountManager(const AccountManager& bankApp)
+		:bank(bankApp.bank), select(bankApp.select), running(bankApp.running) {
+	}
+
+	virtual ~AccountManager() {
+		if (this->bank != NULL) delete bank;
+	}
+
+public:
+
+	const void printMenu() const {
+		cout << "-----Menu-----" << endl;
+		cout << "1. 계정생성" << endl;
+		cout << "2. 계좌개설" << endl;
+		cout << "3. 입    금" << endl;
+		cout << "4. 출    금" << endl;
+		cout << "5. 계정정보 전체 출력" << endl;
+		cout << "6. 프로그램 종료" << endl;
+		cout << "선택: ";
+	}
+
 	void cycle() {
 		cin >> select;
-		int accID, balance;
-		char* cusName;
-		char* cusNum;
+		int accID, balance, select2;
+		char* cusName = NULL;
+		char* regNum = NULL;
+
+		cout << endl;
 
 		switch (select) {
 		case 1:
-			cout << "[계좌개설]" << endl;
-			accID = inputInt("계좌ID");
+			cout << "[계정생성]" << endl;
 			cusName = inputCharArray("이  름");
-			cusNum = inputCharArray("주민번호");
-			balance = inputInt("입금액");
+			regNum = inputCharArray("주민번호");
 
-			bank->addAccount(accID, balance, cusName, cusNum);
+			bank->createAccount(cusName, regNum);
 			break;
 		case 2:
+			cout << "[계좌개설]" << endl;
+			cusName = inputCharArray("이  름");
+			regNum = inputCharArray("주민번호");
+			accID = inputInt("계좌번호");
+			select2 = inputInt("계좌종류(1:보통, 2:입금)");
+			balance = inputInt("입금액");
+
+			bank->createBankBook(cusName, regNum, accID, balance, select2);
+			break;
+		case 3:
 			cout << "[입   금]" << endl;
-			accID = inputInt("계좌ID");
+			accID = inputInt("계좌번호");
 			balance = inputInt("입금액");
 
 			bank->bankDeposit(accID, balance);
 			break;
-		case 3:
+		case 4:
 			cout << "[출   금]" << endl;
-			accID = inputInt("계좌ID");
+			accID = inputInt("계좌번호");
 			balance = inputInt("출금액");
 
 			bank->bankWithdraw(accID, balance);
 			break;
-		case 4:
-			cout << "[계좌정보]" << endl;
-			accID = inputInt("계좌ID");
-
-			bank->printAccountData(accID);
-			break;
 		case 5:
+			cout << "[계좌정보]" << endl;
+			cusName = inputCharArray("이  름");
+			regNum = inputCharArray("주민번호");
+
+			bank->printAccountData(cusName, regNum);
+			break;
+		case 6:
 			cout << "프로그램이 종료됩니다." << endl;
 			running = false;
 
@@ -253,37 +499,27 @@ private:
 			cout << "잘못된 값입니다." << endl;
 		}
 
+		//if (cusName != NULL) delete[] cusName;
+		//if (regNum != NULL) delete[] regNum;
 	}
 
-public:
-
-	AccountManager()
-			:bank(new Bank(BANK_SIZE)), select(0), running(true) {
-
-	}
-
-	AccountManager(const AccountManager& bankApp)
-			:bank(bankApp.bank), select(bankApp.select), running(bankApp.running) {
-	}
-
-	~AccountManager() {
-		if (this->bank != NULL) delete bank;
-	}
-
-	const void run() {
-		while (this->running) {
-			this->printMenu();
-			this->cycle();
-		}
+	const bool isRunning() {
+		return this->running;
 	}
 
 };
 
 int main() {
-	AccountManager bankApplication;
-	bankApplication.run();
+	AccountManager manager;
 
-	//if (bankApplication != NULL) delete bankApplication;
+	while (manager.isRunning()) {
+		manager.printMenu();
+		manager.cycle();
+
+		Sleep(2000);
+		system("cls");
+	}
+
 	return 0;
 }
 

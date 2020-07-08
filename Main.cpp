@@ -2,11 +2,12 @@
 #include <iostream>
 #include <Windows.h>
 
-using namespace std;
-
 #define TEXT_LEN 20
 #define BANK_BOOK_SIZE 100
 #define BANK_SIZE 100
+
+using namespace std;
+
 
 class BankBook {
 private:
@@ -179,8 +180,8 @@ public:
 
 	}
 
-public:
-	// getter
+public: // getter
+	
 	char* getName() const {
 		return this->cusName;
 	}
@@ -225,6 +226,14 @@ public:
 
 	Bank(): accounts(new Account[BANK_SIZE]()), top(0) {
 		
+	}
+
+	Bank(const Bank& bank): accounts(new Account[BANK_SIZE]()), top(bank.top) {
+
+		for (int i = 0; i < bank.top; i++) {
+			this->accounts[i] = Account(bank.accounts[i]);
+		}
+
 	}
 
 	virtual ~Bank() {
@@ -374,8 +383,8 @@ public:
 
 public:
 
-	const bool isBankBookIDExists(const int accID) const {
-		return getBankBook(accID) != nullptr;
+	const bool isBankBookIDExists(const int bankBookID) const {
+		return getBankBook(bankBookID) != nullptr;
 	}
 
 	const bool isAccountExists(const char* cusName, const char* regNum) const {
@@ -453,7 +462,7 @@ public:
 	}
 
 	AccountManager(const AccountManager& bankApp)
-		:bank(bankApp.bank), select(bankApp.select), running(bankApp.running) {
+		:bank(Bank(bankApp.bank)), select(bankApp.select), running(bankApp.running) {
 	}
 
 	virtual ~AccountManager() {

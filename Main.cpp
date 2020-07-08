@@ -11,18 +11,22 @@ using namespace std;
 class BankBook {
 private:
 
-	int bankBookID; // bank book id
+	int id; // bank book id
 	double balance;	// Balance
 
 protected:
 
-	virtual double getInterestAmount() = 0;
+	virtual double getInterestPercent() = 0;
 
-	BankBook() : bankBookID(-2147483648), balance(0.0) {
+	BankBook() : id(-2147483648), balance(0.0) {
 
 	}
 
-	BankBook(int bankBookID, double balance) : bankBookID(bankBookID), balance(balance) {
+	BankBook(int bankBookID, double balance) : id(bankBookID), balance(balance) {
+
+	}
+
+	BankBook(BankBook& book) : id(book.id), balance(book.balance) {
 
 	}
 
@@ -32,18 +36,10 @@ protected:
 
 public:
 
-	const int getBankBookID() const {
-		return this->bankBookID;
-	}
-
-	const double getBalance() const {
-		return this->balance;
-	}
-
 	const bool deposit(double amount) {
 		if (amount < 0) return false;
 		this->balance += amount;
-		this->balance += getInterestAmount();
+		this->balance += getInterestPercent() * this->balance;
 		return true;
 	}
 
@@ -53,13 +49,23 @@ public:
 		return true;
 	}
 
+public:
+
+	const int getID() const {
+		return this->id;
+	}
+
+	const double getBalance() const {
+		return this->balance;
+	}
+
 };
 
 class NormalBankBook : public BankBook {
 protected:
 	// 이자 1%
-	virtual double getInterestAmount() final {
-		return BankBook::getBalance() * 0.01;
+	virtual double getInterestPercent() final {
+		return 0.01;
 	}
 
 public:
@@ -72,13 +78,17 @@ public:
 
 	}
 
+	NormalBankBook(NormalBankBook& book) : BankBook(book) {
+
+	}
+
 };
 
 class DepositBankBook : public BankBook {
 protected:
 	// 이자 2%
-	virtual double getInterestAmount() final {
-		return BankBook::getBalance() * 0.02;
+	virtual double getInterestPercent() final {
+		return 0.02;
 	}
 
 public:
@@ -88,6 +98,10 @@ public:
 	}
 
 	DepositBankBook(int id, int amount) : BankBook(id, amount) {
+
+	}
+
+	DepositBankBook(DepositBankBook& book) : BankBook(book) {
 
 	}
 
@@ -111,17 +125,8 @@ public:
 		normalBankBookTop(0), depositBankBookTop(0) {
 
 	}
-	
-	Account(const Account& account): 
-		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]), 
-		normalBankBook(account.normalBankBook), depositBankBook(account.depositBankBook),
-		normalBankBookTop(account.normalBankBookTop), depositBankBookTop(account.depositBankBookTop) {
 
-		strcpy(this->cusName, account.cusName);
-		strcpy(this->regNum, account.regNum);
-	}
-
-	Account(const char* cusName, const char* regNum): 
+	Account(const char* cusName, const char* regNum) :
 		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]),
 		normalBankBook(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBook(new DepositBankBook[BANK_BOOK_SIZE]),
 		normalBankBookTop(0), depositBankBookTop(0) {
@@ -131,10 +136,28 @@ public:
 
 	}
 	
+	Account(const Account& account): 
+		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]), 
+		normalBankBook(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBook(new DepositBankBook[BANK_BOOK_SIZE]),
+		normalBankBookTop(account.normalBankBookTop), depositBankBookTop(account.depositBankBookTop) {
+
+		for (int i = 0; i < account.normalBankBookTop; i++) {
+			this->normalBankBook[i] = NormalBankBook(account.normalBankBook[i]);
+		}
+		for (int i = 0; i < account.depositBankBookTop; i++) {
+			this->depositBankBook[i] = DepositBankBook(account.depositBankBook[i]);
+		}
+
+		strcpy(this->cusName, account.cusName);
+		strcpy(this->regNum, account.regNum);
+	}
+
 	virtual ~Account() {
 		if (this->cusName != NULL) delete[] cusName;
 		if (this->regNum != NULL) delete[] regNum;
 	}
+
+public:
 
 	bool createBankBook(int id, int amount, bool isNormalBankBook) {
 		if (isNormalBankBook) {
@@ -154,6 +177,7 @@ public:
 
 	}
 
+public:
 	// getter
 	char* getName() const {
 		return this->cusName;
@@ -205,6 +229,8 @@ public:
 		if (this->accounts != NULL) delete[] accounts;
 	}
 
+public:
+
 	const bool hasBankBookID(const int accID) const {
 		return getBankBook(accID) != NULL;
 	}
@@ -219,13 +245,13 @@ public:
 			bb = acc.getNormalBankBook();
 			bankBookTop = acc.getNormalBankBookTop();
 			for (int j = 0; j < bankBookTop; j++) {
-				if (bb[j].getBankBookID() == accID) return &bb[j];
+				if (bb[j].getID() == accID) return &bb[j];
 			}
 
 			bb = acc.getDepositBankBook();
 			bankBookTop = acc.getDepositBankBookTop();
 			for (int j = 0; j < bankBookTop; j++) {
-				if (bb[j].getBankBookID() == accID) return &bb[j];
+				if (bb[j].getID() == accID) return &bb[j];
 			}
 		}
 		return NULL;
@@ -380,13 +406,13 @@ public:
 		bb = account->getNormalBankBook();
 		top = account->getNormalBankBookTop();
 		for (int i = 0; i < top; i++) {
-			cout << "보통계좌(" << bb[i].getBankBookID() << ") " << bb[i].getBalance() << "원" << endl;
+			cout << "보통계좌(" << bb[i].getID() << ") " << bb[i].getBalance() << "원" << endl;
 		}
 
 		bb = account->getDepositBankBook();
 		top = account->getDepositBankBookTop();
 		for (int i = 0; i < top; i++) {
-			cout << "예금계좌(" << bb[i].getBankBookID() << ") " << bb[i].getBalance() << "원" << endl;
+			cout << "예금계좌(" << bb[i].getID() << ") " << bb[i].getBalance() << "원" << endl;
 		}
 
 		return true;
@@ -499,8 +525,8 @@ public:
 			cout << "잘못된 값입니다." << endl;
 		}
 
-		//if (cusName != NULL) delete[] cusName;
-		//if (regNum != NULL) delete[] regNum;
+		if (cusName != NULL) delete[] cusName;
+		if (regNum != NULL) delete[] regNum;
 	}
 
 	const bool isRunning() {
@@ -523,7 +549,7 @@ int main() {
 	return 0;
 }
 
-// OLD CODE ========================
+// OLD C Style CODE ==========================================
 /*
 typedef struct {
 	int accID;

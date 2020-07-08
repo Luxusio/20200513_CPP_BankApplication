@@ -122,8 +122,8 @@ private:
 public:
 	
 	Account():
-		cusName(NULL), regNum(NULL), 
-		normalBankBooks(NULL), depositBankBooks(NULL), 
+		cusName(nullptr), regNum(nullptr),
+		normalBankBooks(nullptr), depositBankBooks(nullptr),
 		normalBankBookTop(0), depositBankBookTop(0) {
 
 	}
@@ -228,7 +228,7 @@ public:
 	}
 
 	virtual ~Bank() {
-		if (this->accounts != NULL) delete[] accounts;
+		if (this->accounts != nullptr) delete[] accounts;
 	}
 
 public:
@@ -254,12 +254,12 @@ public:
 	const void createBankBook(const char* cusName, const char* regNum, const int accID, const int balance, const int type) {
 		Account* account = this->getAccount(cusName, regNum);
 
-		if (account == NULL) {
+		if (account == nullptr) {
 			cout << "존재하지 않는 계정입니다." << endl;
 			return;
 		}
 
-		if (getBankBook(accID) != NULL) {
+		if (getBankBook(accID) != nullptr) {
 			cout << "해당 계좌번호는 이미 존재합니다." << endl;
 			return;
 		}
@@ -310,7 +310,7 @@ public:
 	const bool bankDeposit(int accID, int value) {
 		BankBook* bankBook = this->getBankBook(accID);
 
-		if (bankBook == NULL) {
+		if (bankBook == nullptr) {
 			cout << "계좌가 존재하지 않습니다." << endl;
 			return false;
 		}
@@ -328,7 +328,7 @@ public:
 	const bool bankWithdraw(int accID, int value) {
 		BankBook* bankBook = this->getBankBook(accID);
 
-		if (bankBook == NULL) {
+		if (bankBook == nullptr) {
 			cout << "계좌가 존재하지 않습니다." << endl;
 			return false;
 		}
@@ -346,7 +346,7 @@ public:
 
 	const bool printAccountData(const char* cusName, const char* regNum) const {
 		const Account* account = this->getAccount(cusName, regNum);
-		if (account == NULL) {
+		if (account == nullptr) {
 			cout << "존재하지 않는 ID입니다." << endl;
 			return false;
 		}
@@ -375,7 +375,7 @@ public:
 public:
 
 	const bool isBankBookIDExists(const int accID) const {
-		return getBankBook(accID) != NULL;
+		return getBankBook(accID) != nullptr;
 	}
 
 	const bool isAccountExists(const char* cusName, const char* regNum) const {
@@ -401,7 +401,7 @@ public:
 				if (bb[j].getID() == accID) return &bb[j];
 			}
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	const int getAccNum(const char* cusName, const char* regNum) const {
@@ -418,7 +418,7 @@ public:
 
 	Account* getAccount(const char* cusName, const char* regNum) const {
 		int no = this->getAccNum(cusName, regNum);
-		if (no == -1) return NULL;
+		if (no == -1) return nullptr;
 		return &accounts[no];
 	}
 
@@ -457,7 +457,7 @@ public:
 	}
 
 	virtual ~AccountManager() {
-		if (this->bank != NULL) delete bank;
+		if (this->bank != nullptr) delete bank;
 	}
 
 public:
@@ -476,8 +476,8 @@ public:
 	void cycle() {
 		cin >> select;
 		int accID, balance, select2;
-		char* cusName = NULL;
-		char* regNum = NULL;
+		char* cusName = nullptr;
+		char* regNum = nullptr;
 
 		cout << endl;
 

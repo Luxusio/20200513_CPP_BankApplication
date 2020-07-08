@@ -26,7 +26,7 @@ protected:
 
 	}
 
-	BankBook(BankBook& book) : id(book.id), balance(book.balance) {
+	BankBook(BankBook& bankBook) : id(bankBook.id), balance(bankBook.balance) {
 
 	}
 
@@ -78,7 +78,7 @@ public:
 
 	}
 
-	NormalBankBook(NormalBankBook& book) : BankBook(book) {
+	NormalBankBook(NormalBankBook& bankBook) : BankBook(bankBook) {
 
 	}
 
@@ -101,7 +101,7 @@ public:
 
 	}
 
-	DepositBankBook(DepositBankBook& book) : BankBook(book) {
+	DepositBankBook(DepositBankBook& bankBook) : BankBook(bankBook) {
 
 	}
 
@@ -121,7 +121,9 @@ private:
 
 public:
 	
-	Account():cusName(NULL), regNum(NULL), normalBankBook(NULL), depositBankBook(NULL), 
+	Account():
+		cusName(NULL), regNum(NULL), 
+		normalBankBook(NULL), depositBankBook(NULL), 
 		normalBankBookTop(0), depositBankBookTop(0) {
 
 	}
@@ -231,56 +233,8 @@ public:
 
 public:
 
-	const bool hasBankBookID(const int accID) const {
-		return getBankBook(accID) != NULL;
-	}
-
-	BankBook* getBankBook(const int accID) const {
-		for (int i = 0; i < top; i++) {
-			Account acc = this->accounts[i];
-
-			BankBook* bb;
-			int bankBookTop;
-
-			bb = acc.getNormalBankBook();
-			bankBookTop = acc.getNormalBankBookTop();
-			for (int j = 0; j < bankBookTop; j++) {
-				if (bb[j].getID() == accID) return &bb[j];
-			}
-
-			bb = acc.getDepositBankBook();
-			bankBookTop = acc.getDepositBankBookTop();
-			for (int j = 0; j < bankBookTop; j++) {
-				if (bb[j].getID() == accID) return &bb[j];
-			}
-		}
-		return NULL;
-	}
-
-	const int getAccNum(const char* cusName, const char* regNum) const {
-		for (int i = 0; i < top; i++) {
-			Account acc = this->accounts[i];
-
-			if (strcmp(acc.getName(), cusName) == 0 &&
-				strcmp(acc.getRegNum(), regNum) == 0) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	const bool hasAccount(const char* cusName, const char* regNum) const {
-		return getAccNum(cusName, regNum) != -1;
-	}
-
-	Account* getAccount(const char* cusName, const char* regNum) const {
-		int no = this->getAccNum(cusName, regNum);
-		if (no == -1) return NULL;
-		return &accounts[no];
-	}
-
 	const void createAccount(char* cusName, char* regNum) {
-		if (hasAccount(cusName, regNum)) {
+		if (isAccountExists(cusName, regNum)) {
 			cout << "해당 이름과 주민번호로 된 계정이 이미 존재합니다." << endl;
 			return;
 		}
@@ -416,6 +370,56 @@ public:
 		}
 
 		return true;
+	}
+
+public:
+
+	const bool isBankBookIDExists(const int accID) const {
+		return getBankBook(accID) != NULL;
+	}
+
+	const bool isAccountExists(const char* cusName, const char* regNum) const {
+		return getAccNum(cusName, regNum) != -1;
+	}
+
+	BankBook* getBankBook(const int accID) const {
+		for (int i = 0; i < top; i++) {
+			Account acc = this->accounts[i];
+
+			BankBook* bb;
+			int bankBookTop;
+
+			bb = acc.getNormalBankBook();
+			bankBookTop = acc.getNormalBankBookTop();
+			for (int j = 0; j < bankBookTop; j++) {
+				if (bb[j].getID() == accID) return &bb[j];
+			}
+
+			bb = acc.getDepositBankBook();
+			bankBookTop = acc.getDepositBankBookTop();
+			for (int j = 0; j < bankBookTop; j++) {
+				if (bb[j].getID() == accID) return &bb[j];
+			}
+		}
+		return NULL;
+	}
+
+	const int getAccNum(const char* cusName, const char* regNum) const {
+		for (int i = 0; i < top; i++) {
+			Account acc = this->accounts[i];
+
+			if (strcmp(acc.getName(), cusName) == 0 &&
+				strcmp(acc.getRegNum(), regNum) == 0) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	Account* getAccount(const char* cusName, const char* regNum) const {
+		int no = this->getAccNum(cusName, regNum);
+		if (no == -1) return NULL;
+		return &accounts[no];
 	}
 
 };

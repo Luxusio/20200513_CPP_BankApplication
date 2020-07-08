@@ -223,7 +223,7 @@ private:
 
 public:
 
-	Bank(int maxSize): accounts(new Account[maxSize]()), top(0) {
+	Bank(): accounts(new Account[BANK_SIZE]()), top(0) {
 		
 	}
 
@@ -448,7 +448,7 @@ private:
 public:
 	
 	AccountManager()
-		:bank(new Bank(BANK_SIZE)), select(0), running(true) {
+		:bank(new Bank()), select(0), running(true) {
 
 	}
 

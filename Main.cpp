@@ -113,8 +113,8 @@ private:
 	char* cusName;	// Customer Name
 	char* regNum;	// Registration Number
 
-	NormalBankBook* normalBankBook;
-	DepositBankBook* depositBankBook;
+	NormalBankBook* normalBankBooks;
+	DepositBankBook* depositBankBooks;
 
 	int normalBankBookTop;
 	int depositBankBookTop;
@@ -123,14 +123,14 @@ public:
 	
 	Account():
 		cusName(NULL), regNum(NULL), 
-		normalBankBook(NULL), depositBankBook(NULL), 
+		normalBankBooks(NULL), depositBankBooks(NULL), 
 		normalBankBookTop(0), depositBankBookTop(0) {
 
 	}
 
 	Account(const char* cusName, const char* regNum) :
 		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]),
-		normalBankBook(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBook(new DepositBankBook[BANK_BOOK_SIZE]),
+		normalBankBooks(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBooks(new DepositBankBook[BANK_BOOK_SIZE]),
 		normalBankBookTop(0), depositBankBookTop(0) {
 
 		strcpy(this->cusName, cusName);
@@ -140,14 +140,14 @@ public:
 	
 	Account(const Account& account): 
 		cusName(new char[TEXT_LEN]), regNum(new char[TEXT_LEN]), 
-		normalBankBook(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBook(new DepositBankBook[BANK_BOOK_SIZE]),
+		normalBankBooks(new NormalBankBook[BANK_BOOK_SIZE]), depositBankBooks(new DepositBankBook[BANK_BOOK_SIZE]),
 		normalBankBookTop(account.normalBankBookTop), depositBankBookTop(account.depositBankBookTop) {
 
 		for (int i = 0; i < account.normalBankBookTop; i++) {
-			this->normalBankBook[i] = NormalBankBook(account.normalBankBook[i]);
+			this->normalBankBooks[i] = NormalBankBook(account.normalBankBooks[i]);
 		}
 		for (int i = 0; i < account.depositBankBookTop; i++) {
-			this->depositBankBook[i] = DepositBankBook(account.depositBankBook[i]);
+			this->depositBankBooks[i] = DepositBankBook(account.depositBankBooks[i]);
 		}
 
 		strcpy(this->cusName, account.cusName);
@@ -155,8 +155,8 @@ public:
 	}
 
 	virtual ~Account() {
-		if (this->cusName != NULL) delete[] cusName;
-		if (this->regNum != NULL) delete[] regNum;
+		if (this->cusName != nullptr) delete[] cusName;
+		if (this->regNum != nullptr) delete[] regNum;
 	}
 
 public:
@@ -166,14 +166,14 @@ public:
 			if (this->normalBankBookTop == BANK_BOOK_SIZE) {
 				return false;
 			}
-			this->normalBankBook[normalBankBookTop++] = NormalBankBook(id, amount);
+			this->normalBankBooks[normalBankBookTop++] = NormalBankBook(id, amount);
 			return true;
 		}
 		else {
 			if (this->depositBankBookTop == BANK_BOOK_SIZE) {
 				return false;
 			}
-			this->depositBankBook[depositBankBookTop++] = DepositBankBook(id, amount);
+			this->depositBankBooks[depositBankBookTop++] = DepositBankBook(id, amount);
 			return true;
 		}
 
@@ -190,11 +190,11 @@ public:
 	}
 
 	NormalBankBook* getNormalBankBook() const {
-		return this->normalBankBook;
+		return this->normalBankBooks;
 	}
 
 	DepositBankBook* getDepositBankBook() const {
-		return this->depositBankBook;
+		return this->depositBankBooks;
 	}
 
 	int getNormalBankBookTop() const {
@@ -207,10 +207,10 @@ public:
 
 	BankBook* getBankBook(bool isNormalBankBook) {
 		if (isNormalBankBook) {
-			return this->normalBankBook;
+			return this->normalBankBooks;
 		}
 		else {
-			return this->depositBankBook;
+			return this->depositBankBooks;
 		}
 	}
 
@@ -529,8 +529,8 @@ public:
 			cout << "잘못된 값입니다." << endl;
 		}
 
-		if (cusName != NULL) delete[] cusName;
-		if (regNum != NULL) delete[] regNum;
+		if (cusName != nullptr) delete[] cusName;
+		if (regNum != nullptr) delete[] regNum;
 	}
 
 	const bool isRunning() {
